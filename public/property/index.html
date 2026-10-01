@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rental property | KirayaGo</title>
+<meta name="description" content="Rental property details on KirayaGo.">
+<link rel="canonical" href="/rent/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<a class="skip" href="#main" data-i18n="common.skip">Skip to content</a>
+<header id="site-header" class="site-header"></header>
+<main id="main" class="wrap prop-page"><div id="prop" aria-live="polite"><div class="card skel tall"></div></div></main>
+<div id="contact-bar" class="contact-bar" hidden></div>
+<dialog id="report-dlg" class="dlg">
+  <form method="dialog" id="report-form">
+    <h2 data-i18n="report.title">Report this listing</h2>
+    <fieldset id="report-reasons"></fieldset>
+    <label for="report-details" data-i18n="report.details">Details (optional)</label>
+    <textarea id="report-details" maxlength="1000" rows="3"></textarea>
+    <div class="dlg-actions"><button type="button" class="btn ghost" id="report-cancel" data-i18n="common.cancel">Cancel</button><button type="submit" class="btn" data-i18n="report.send">Send report</button></div>
+  </form>
+</dialog>
+<footer id="site-footer" class="site-footer"></footer>
+<script type="module" src="/js/property.js"></script>
+</body>
+</html>

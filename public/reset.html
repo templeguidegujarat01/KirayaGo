@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reset password | KirayaGo</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header id="site-header" class="site-header"></header>
+<main id="main" class="wrap narrow">
+  <h1 data-i18n="auth.reset_title">Set a new password</h1>
+  <div id="msg" role="alert" aria-live="assertive"></div>
+  <form id="reset-form" class="form" novalidate>
+    <label for="r-pass" data-i18n="auth.new_password">New password</label><input id="r-pass" type="password" autocomplete="new-password" minlength="8" required>
+    <button class="btn full big" type="submit" data-i18n="auth.save_password">Save password</button>
+  </form>
+</main>
+<footer id="site-footer" class="site-footer"></footer>
+<script type="module" src="/js/auth.js"></script>
+</body>
+</html>

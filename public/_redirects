@@ -1,0 +1,3 @@
+# Clean URLs for Cloudflare Pages (static files always win; these only catch unknown sub-paths)
+/rent/*      /rent/index.html      200
+/property/*  /property/index.html  200

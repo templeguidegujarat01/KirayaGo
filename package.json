@@ -1,0 +1,15 @@
+{
+  "name": "kirayago",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "KirayaGo — India-wide rental-only property platform (static frontend + Supabase).",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs && npx wrangler pages dev dist --port 8788",
+    "check": "node --check build.mjs && node scripts/check-i18n.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

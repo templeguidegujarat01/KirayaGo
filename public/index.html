@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KirayaGo — Find a Home to Rent in India | Direct from owners</title>
+<meta name="description" content="KirayaGo is a rental-only platform for India. See rent, deposit, electricity, water, parking and house rules before you call. Owners list for free.">
+<link rel="canonical" href="/">
+<meta property="og:title" content="KirayaGo — Find a Home to Rent in India">
+<meta property="og:description" content="Rental-only. Clear costs, clear rules, clear owner arrangement.">
+<meta property="og:type" content="website">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"KirayaGo","description":"Rental-only property platform for India"}</script>
+</head>
+<body>
+<a class="skip" href="#main" data-i18n="common.skip">Skip to content</a>
+<header id="site-header" class="site-header"></header>
+<main id="main">
+  <section class="hero">
+    <div class="wrap">
+      <h1 data-i18n="home.hero_title">Find a Home to Rent</h1>
+      <p class="lead" data-i18n="home.hero_sub">Real rent, real rules, real details — before you make the call.</p>
+      <form id="hero-search" class="search-grid" role="search">
+        <div><label for="hs-state" data-i18n="s.state">State</label><select id="hs-state" name="state"></select></div>
+        <div><label for="hs-city" data-i18n="s.city">City</label><select id="hs-city" name="city" disabled></select></div>
+        <div><label for="hs-area" data-i18n="s.area">Area</label><select id="hs-area" name="locality" disabled></select></div>
+        <div><label for="hs-budget" data-i18n="s.budget">Budget (per month)</label><select id="hs-budget" name="budget"></select></div>
+        <div><label for="hs-bhk" data-i18n="s.bhk">BHK</label><select id="hs-bhk" name="bhk"></select></div>
+        <div class="go"><button class="btn big" type="submit" data-i18n="s.search">Search rentals</button></div>
+      </form>
+      <p id="hs-hint" class="muted small" hidden></p>
+    </div>
+  </section>
+
+  <section class="wrap cta-band">
+    <div>
+      <h2 data-i18n="home.list_title">List Your Property</h2>
+      <p data-i18n="home.list_sub">List your rental property and connect directly with people looking for a home.</p>
+    </div>
+    <a class="btn big accent" href="/list.html" data-i18n="home.list_btn">List your property — free</a>
+  </section>
+
+  <section class="wrap" id="browse">
+    <h2 data-i18n="home.browse_states">Browse rentals by state</h2>
+    <div id="states-list" class="chips"></div>
+    <h2 data-i18n="home.popular_cities">Cities with listings</h2>
+    <div id="cities-list" class="chips"></div>
+    <p id="browse-empty" class="notice" hidden data-i18n="home.no_listings_yet">No properties have been listed yet. Be the first — list yours.</p>
+  </section>
+
+  <section class="wrap">
+    <h2 data-i18n="home.how_title">How KirayaGo works</h2>
+    <ol class="steps3">
+      <li><b data-i18n="home.how1_t">Owners list</b><span data-i18n="home.how1_d">Create a free account and describe your home step by step — rent, rules, electricity, water, photos.</span></li>
+      <li><b data-i18n="home.how2_t">Tenants search</b><span data-i18n="home.how2_d">Filter by state, city, area, budget and the things that matter to you. No account needed.</span></li>
+      <li><b data-i18n="home.how3_t">Talk directly</b><span data-i18n="home.how3_d">Call or WhatsApp the person who listed it. You already know the basics, so the conversation is short.</span></li>
+    </ol>
+  </section>
+
+  <section class="wrap">
+    <h2 data-i18n="home.why_title">Why detailed rental information matters</h2>
+    <div class="grid3">
+      <div class="tile"><h3 data-i18n="home.why1_t">How much will I actually pay?</h3><p data-i18n="home.why1_d">Rent, deposit, maintenance and other charges are shown separately — never buried in a description.</p></div>
+      <div class="tile"><h3 data-i18n="home.why2_t">Does the owner live here?</h3><p data-i18n="home.why2_d">Same building, same floor or elsewhere — and whether the entrance is separate or shared.</p></div>
+      <div class="tile"><h3 data-i18n="home.why3_t">How does electricity work?</h3><p data-i18n="home.why3_d">Separate meter, sub-meter or shared? And how the bill is split, so there are no surprises.</p></div>
+      <div class="tile"><h3 data-i18n="home.why4_t">Who can live here?</h3><p data-i18n="home.why4_d">Family, bachelors, students or working professionals — plus occupant limits, pets and visitors.</p></div>
+      <div class="tile"><h3 data-i18n="home.why5_t">Water and parking</h3><p data-i18n="home.why5_d">Water source and known shortages, and the number of car and bike spaces.</p></div>
+      <div class="tile"><h3 data-i18n="home.why6_t">Honest labels</h3><p data-i18n="home.why6_d">Direct owner, property manager or broker — clearly marked. No fake ratings or made-up verification.</p></div>
+    </div>
+  </section>
+
+  <section class="wrap two-col">
+    <div class="tile"><h2 data-i18n="home.owners_title">For property owners</h2>
+      <ul class="ticks"><li data-i18n="home.owners1">Free to list. No brokerage.</li><li data-i18n="home.owners2">Photos are compressed on your phone before upload.</li><li data-i18n="home.owners3">Save progress and finish later.</li><li data-i18n="home.owners4">Mark rented or available with one tap.</li></ul>
+      <a class="btn accent" href="/list.html" data-i18n="nav.list">List Your Property</a></div>
+    <div class="tile"><h2 data-i18n="home.tenants_title">For tenants</h2>
+      <ul class="ticks"><li data-i18n="home.tenants1">Browse without creating an account.</li><li data-i18n="home.tenants2">Filter by electricity, parking, owner arrangement and more.</li><li data-i18n="home.tenants3">Report wrong or already-rented listings.</li></ul>
+      <a class="btn" href="/rent/" data-i18n="nav.find">Find a Rental</a></div>
+  </section>
+</main>
+<footer id="site-footer" class="site-footer"></footer>
+<script type="module" src="/js/home.js"></script>
+</body>
+</html>

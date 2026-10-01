@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>List your property | KirayaGo</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<a class="skip" href="#step-body" data-i18n="common.skip">Skip to content</a>
+<header id="site-header" class="site-header"></header>
+<main id="main" class="wrap wizard">
+  <div class="wiz-top">
+    <p id="wiz-step" class="muted" aria-live="polite"></p>
+    <progress id="wiz-progress" max="12" value="1" aria-label="Progress"></progress>
+  </div>
+  <form id="wizard" novalidate>
+    <h1 id="step-title" tabindex="-1"></h1>
+    <p id="step-intro" class="muted"></p>
+    <div id="step-body"></div>
+    <div id="step-error" class="notice err" role="alert" hidden></div>
+    <div class="wiz-nav">
+      <button type="button" class="btn ghost" id="back" data-i18n="common.back">Back</button>
+      <button type="button" class="btn ghost" id="save-exit" data-i18n="form.save_exit">Save & finish later</button>
+      <button type="submit" class="btn accent" id="next" data-i18n="common.next">Next</button>
+    </div>
+  </form>
+  <div id="done" class="notice ok" hidden></div>
+</main>
+<footer id="site-footer" class="site-footer"></footer>
+<script type="module" src="/js/listform.js"></script>
+</body>
+</html>

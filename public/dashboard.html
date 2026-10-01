@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My dashboard | KirayaGo</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<a class="skip" href="#main" data-i18n="common.skip">Skip to content</a>
+<header id="site-header" class="site-header"></header>
+<main id="main" class="wrap">
+  <div class="toolbar"><h1 data-i18n="dash.title">My dashboard</h1><a class="btn accent" href="/list.html" data-i18n="dash.add">+ Add property</a></div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-props" aria-selected="true" data-i18n="dash.my_props">My properties</button>
+    <button role="tab" id="tab-acct" aria-selected="false" data-i18n="dash.account">Account settings</button>
+  </div>
+  <section id="props-panel"><div id="my-props" class="mylist"></div></section>
+  <section id="acct-panel" hidden>
+    <form id="profile-form" class="form">
+      <h2 data-i18n="dash.profile">Profile</h2>
+      <label for="p-email" data-i18n="auth.email">Email</label><input id="p-email" disabled>
+      <label for="p-name" data-i18n="auth.name">Your name</label><input id="p-name" maxlength="80">
+      <label for="p-type" data-i18n="dash.account_type">I am a</label><select id="p-type"></select>
+      <label for="p-phone" data-i18n="dash.phone">Phone (private)</label><input id="p-phone" inputmode="numeric" maxlength="15">
+      <button class="btn" type="submit" data-i18n="common.save">Save</button>
+    </form>
+    <form id="pw-form" class="form">
+      <h2 data-i18n="dash.change_pw">Change password</h2>
+      <label for="pw-new" data-i18n="auth.new_password">New password</label><input id="pw-new" type="password" minlength="8" autocomplete="new-password">
+      <button class="btn" type="submit" data-i18n="auth.save_password">Save password</button>
+    </form>
+  </section>
+</main>
+<dialog id="rent-dlg" class="dlg"><form method="dialog" id="rent-form">
+  <h2 data-i18n="dash.change_rent">Change rent</h2>
+  <label for="rd-rent" data-i18n="f.monthly_rent">Monthly rent (₹)</label><input id="rd-rent" type="number" min="500" step="100" required inputmode="numeric">
+  <label for="rd-dep" data-i18n="f.security_deposit">Security deposit (₹)</label><input id="rd-dep" type="number" min="0" step="500" inputmode="numeric">
+  <div class="dlg-actions"><button type="button" class="btn ghost" id="rd-cancel" data-i18n="common.cancel">Cancel</button><button class="btn" type="submit" data-i18n="common.save">Save</button></div>
+</form></dialog>
+<footer id="site-footer" class="site-footer"></footer>
+<script type="module" src="/js/dashboard.js"></script>
+</body>
+</html>

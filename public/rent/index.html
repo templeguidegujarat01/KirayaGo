@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Houses & flats for rent in India | KirayaGo</title>
+<meta name="description" content="Search rental homes across India with clear rent, deposit, electricity, water and house rules.">
+<link rel="canonical" href="/rent/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<a class="skip" href="#results" data-i18n="common.skip">Skip to content</a>
+<header id="site-header" class="site-header"></header>
+<main id="main" class="wrap search-page">
+  <div class="toolbar">
+    <div>
+      <h1 id="page-h1" data-i18n="nav.find">Find a Rental</h1>
+      <p id="count" class="muted" aria-live="polite"></p>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn ghost filter-toggle" id="open-filters" type="button"><span data-i18n="s.filters">Filters</span> <span id="fcount"></span></button>
+      <label class="sr" for="sort" data-i18n="s.sort">Sort by</label>
+      <select id="sort"><option value="newest" data-i18n="sort.newest">Newest first</option><option value="rent_asc" data-i18n="sort.rent_asc">Rent: low to high</option><option value="rent_desc" data-i18n="sort.rent_desc">Rent: high to low</option></select>
+    </div>
+  </div>
+  <div class="layout">
+    <aside id="filters" class="filters" aria-label="Filters">
+      <form id="fform">
+        <div class="filters-head"><h2 data-i18n="s.filters">Filters</h2><button type="button" class="linklike" id="close-filters" data-i18n="common.close">Close</button></div>
+        <fieldset><legend data-i18n="s.location">Location</legend>
+          <label for="f-state" data-i18n="s.state">State</label><select id="f-state" name="state"></select>
+          <label for="f-city" data-i18n="s.city">City</label><select id="f-city" name="city"></select>
+          <label for="f-area" data-i18n="s.area">Area</label><select id="f-area" name="locality"></select></fieldset>
+        <fieldset><legend data-i18n="s.budget">Budget (per month)</legend>
+          <div id="presets" class="chips small"></div>
+          <div class="row2"><div><label for="f-min" data-i18n="s.min">Min ₹</label><input id="f-min" name="min_rent" type="number" min="0" step="500" inputmode="numeric"></div>
+          <div><label for="f-max" data-i18n="s.max">Max ₹</label><input id="f-max" name="max_rent" type="number" min="0" step="500" inputmode="numeric"></div></div></fieldset>
+        <fieldset><legend data-i18n="s.bhk">BHK</legend><div id="g-bhk" class="checks inline"></div></fieldset>
+        <fieldset><legend data-i18n="f.property_type">Property type</legend><select id="f-type" name="type"></select></fieldset>
+        <fieldset><legend data-i18n="s.tenant">Who will live?</legend><div id="g-tenants" class="checks"></div></fieldset>
+        <details id="adv"><summary data-i18n="s.more_filters">More filters</summary>
+          <fieldset><legend data-i18n="f.furnishing">Furnishing</legend><div id="g-furnishing" class="checks"></div></fieldset>
+          <fieldset><legend data-i18n="s.parking">Parking</legend><div id="g-parking" class="checks"></div></fieldset>
+          <fieldset><legend data-i18n="s.amenities">Amenities</legend><div id="g-amenities" class="checks"></div></fieldset>
+          <fieldset><legend data-i18n="s.owner_arr">Owner arrangement</legend><div id="g-owner_lives" class="checks"></div></fieldset>
+          <fieldset><legend data-i18n="s.electricity">Electricity</legend><div id="g-electricity" class="checks"></div></fieldset>
+          <fieldset><legend data-i18n="s.water">Water</legend><div id="g-water" class="checks"></div></fieldset>
+          <fieldset><legend data-i18n="s.transit">Nearby transport</legend>
+            <label for="f-metro" data-i18n="s.metro_within">Metro within</label><select id="f-metro" name="metro_max_m"></select>
+            <label for="f-bus" data-i18n="s.bus_within">Bus stop within</label><select id="f-bus" name="bus_max_m"></select></fieldset>
+          <fieldset><legend data-i18n="s.other">Other</legend>
+            <label for="f-dep" data-i18n="s.max_deposit">Max deposit ₹</label><input id="f-dep" name="max_deposit" type="number" min="0" step="1000" inputmode="numeric">
+            <label for="f-bath" data-i18n="s.min_bath">Min bathrooms</label><input id="f-bath" name="min_bathrooms" type="number" min="1" max="10" inputmode="numeric">
+            <label for="f-occ" data-i18n="s.occupants">Need space for (people)</label><input id="f-occ" name="occupants" type="number" min="1" max="30" inputmode="numeric">
+            <label class="check"><input type="checkbox" name="available_now" value="1"> <span data-i18n="s.available_now">Available now</span></label>
+            <div id="g-listing_by" class="checks"></div></fieldset>
+        </details>
+        <div class="filters-foot"><button class="btn full" type="submit" data-i18n="s.apply">Show results</button><button class="btn ghost full" type="button" id="clear" data-i18n="s.clear">Clear all</button></div>
+      </form>
+    </aside>
+    <section id="results" aria-live="polite">
+      <div id="cards" class="cards"></div>
+      <div id="empty" hidden></div>
+      <nav id="pager" class="pager" aria-label="Pagination"></nav>
+    </section>
+  </div>
+</main>
+<footer id="site-footer" class="site-footer"></footer>
+<script type="module" src="/js/search.js"></script>
+</body>
+</html>
