@@ -64,7 +64,7 @@ Static website (plain HTML/CSS/JavaScript, no framework) + **Supabase** (databas
    | `SUPABASE_ANON_KEY` | your anon public key |
    | `SITE_URL` | your final address, no trailing slash, e.g. `https://kirayago.pages.dev` |
 4. Deploy. Then go back to step 2 and put the final address into Supabase's Site URL / Redirect URLs.
-5. **Sitemap**: `sitemap.xml` is generated at build time from real published listings. Re-deploy (Deployments → Retry / push a commit) to refresh it, then submit `https://YOUR-SITE/sitemap.xml` in Google Search Console.
+5. **Sitemap**: `sitemap.xml` is generated at build time from real published listings (needs `SITE_URL`; without it no sitemap is written). Re-deploy (Deployments → Retry / push a commit) to refresh it, then submit `https://YOUR-SITE/sitemap.xml` in Google Search Console.
 
 ## 6. Run it on your computer (optional)
 ```
@@ -78,8 +78,8 @@ npm run check            # syntax + translation coverage check
 2. **Sign up** → (confirm email if enabled) → **Log in** → you land on the dashboard.
 3. **List your property**: go through the 12 steps (each step saves). Add 2+ real photos (they are compressed on your device). Publish.
 4. Open **Find a rental**: your listing appears; try the state/city/area filters, budget chips, sorting.
-5. Open the listing: gallery, cost breakdown, electricity/water/parking/owner sections. Tap **Show contact** → Call / WhatsApp buttons appear.
-6. Dashboard: **Change rent**, **Mark rented** (listing shows "Rented"), **Mark available** again.
+5. Open the listing: gallery, cost breakdown, electricity/water/parking/owner sections. While logged out, tap **Show contact details** → you are asked to log in or sign up (the phone number must NOT appear). Log in → you return to the listing → Call / WhatsApp buttons appear.
+6. Dashboard: **Change rent**, **Mark rented** (the listing disappears from public search and its public page; contact is no longer available), **Mark available** again.
 7. Log out, open the listing as a visitor, use **Report** → send a report.
 8. Log in as admin → **Admin** → Reports tab shows it → Suspend / Resolve. Suspended listings disappear from search.
 9. Switch language to **हिन्दी** in the top bar.
@@ -87,7 +87,8 @@ npm run check            # syntax + translation coverage check
 ## How it is built (short)
 - `public/` – the website. `build.mjs` copies it to `dist/` and writes `dist/js/config.js` (public values only), `robots.txt`, `sitemap.xml`.
 - `supabase/schema.sql` – tables, security rules (RLS), helper functions, photo bucket. All writes go through checked database functions; the browser has no direct write access to listings.
-- **Privacy**: phone numbers are never in page HTML or search results – they are fetched only when a visitor taps "Show contact". Exact address and owner identity are private.
+- **Privacy**: phone/WhatsApp numbers are never in page HTML, search results or listing data. Only a **logged-in** user can fetch them (database function `get_public_contact`; `anon` has no permission to run it), one listing at a time, max 100 different listings per account per 24 h, and each lookup is logged (user + listing + time, readable only with SQL access) to deter scraping. Exact address and owner identity are private.
+- **Already ran an older `schema.sql`?** Run the new one again in the SQL Editor; it is safe to re-run and applies the permission fixes.
 - `functions/` – Cloudflare Pages Functions that add the listing title/description/preview image to the HTML on the server (for Google and WhatsApp previews) and mark empty location pages `noindex`. If they fail, the site still works (the browser adds the tags).
 - **Photos**: compressed in the browser to a full image (≤1600 px) and a 480 px thumbnail, stored in the `property-images` bucket (max 15 per listing).
 - No fake data, fake "verified" badges, view counts or ratings anywhere. The only trust signals shown are real: who posted it (owner / manager / broker), last updated, member since, and whether the email is confirmed.
@@ -103,5 +104,7 @@ npm run check            # syntax + translation coverage check
 - Sitemap reflects listings at the last deploy. Home "browse" chips read at most 1000 location rows.
 - No map, GPS, or "near me" search. Nearby distances are typed in by the lister.
 - Hindi text was machine-drafted: have a native speaker review it before launch.
-- Anyone can report a published listing; there is no CAPTCHA. Add Cloudflare Turnstile if you get spam.
+- Anyone can report a published listing; the database limits reports (20 per listing and 10 per logged-in user per hour) but there is no CAPTCHA. Add Cloudflare Turnstile if you get spam.
+- Any logged-in user can see contact numbers (that is the rule), and owners can still type a phone number into the free-text description; KirayaGo does not scan text for numbers.
+- Content-Security-Policy is set in `_headers` (generated for your Supabase address); it has not been tested in every browser, so check the browser console on first deploy.
 - KirayaGo does not verify identity, ownership or documents, and says so on the site. Do not add "verified" labels unless you really perform verification.

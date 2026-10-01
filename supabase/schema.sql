@@ -280,6 +280,23 @@ drop trigger if exists images_limit on public.property_images;
 create trigger images_limit before insert on public.property_images
   for each row execute function public.limit_images();
 
+-- Basic abuse protection for the public "Report listing" form.
+create or replace function public.limit_reports() returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if (select count(*) from public.reports where property_id = new.property_id
+        and created_at > now() - interval '1 hour') >= 20 then
+    raise exception 'This listing has received many reports recently. Please try again later.' using errcode = '54000';
+  end if;
+  if new.reporter_id is not null and (select count(*) from public.reports where reporter_id = new.reporter_id
+        and created_at > now() - interval '1 hour') >= 10 then
+    raise exception 'You have sent too many reports. Please try again later.' using errcode = '54000';
+  end if;
+  return new;
+end $$;
+drop trigger if exists reports_limit on public.reports;
+create trigger reports_limit before insert on public.reports
+  for each row execute function public.limit_reports();
+
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare t text := coalesce(new.raw_user_meta_data->>'account_type', 'owner');
@@ -469,6 +486,11 @@ begin
   update public.property_private set address_line = left(nullif(trim(pv->>'address_line'), ''), 300)
   where property_id = pid;
 
+  -- A live (or awaiting-review) listing must always stay complete: edits that blank a required field are rejected.
+  if (select status from public.properties where id = pid) in ('published', 'pending_review') then
+    perform public.assert_publishable(pid);
+  end if;
+
   return pid;
 end $$;
 
@@ -501,7 +523,10 @@ end $$;
 create or replace function public.set_property_rent(p_id uuid, p_rent integer, p_deposit integer default null) returns void
 language plpgsql security definer set search_path = public as $$
 begin
+  if auth.uid() is null then raise exception 'Please log in first.' using errcode = '28000'; end if;
   if not (public.is_owner(p_id) or public.is_admin()) then raise exception 'Not allowed.' using errcode = '42501'; end if;
+  if p_rent is null or p_rent not between 500 and 10000000 then raise exception 'Please enter a valid monthly rent.'; end if;
+  if p_deposit is not null and p_deposit not between 0 and 100000000 then raise exception 'Please enter a valid deposit.'; end if;
   update public.properties set monthly_rent = p_rent, security_deposit = coalesce(p_deposit, security_deposit)
   where id = p_id;
 end $$;
@@ -509,18 +534,46 @@ end $$;
 create or replace function public.delete_property(p_id uuid) returns void
 language plpgsql security definer set search_path = public as $$
 begin
+  if auth.uid() is null then raise exception 'Please log in first.' using errcode = '28000'; end if;
   if not (public.is_owner(p_id) or public.is_admin()) then raise exception 'Not allowed.' using errcode = '42501'; end if;
   delete from public.properties where id = p_id;
 end $$;
 
 -- ---------- public read API ----------
+-- Contact details: ONLY for logged-in users, ONLY for published listings.
+-- EXECUTE is also revoked from anon in the permissions block below; the auth.uid() check is a second lock.
+-- Each lookup is logged (user, listing, time) and one account may open at most 100 different listings per 24 h,
+-- so a free account cannot bulk-harvest phone numbers. The log table is not readable through the API.
+create table if not exists public.contact_access (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  property_id uuid not null references public.properties(id) on delete cascade,
+  viewed_at timestamptz not null default now()
+);
+create index if not exists contact_access_user_idx on public.contact_access (user_id, viewed_at desc);
+
 create or replace function public.get_public_contact(p_id uuid)
 returns table (contact_name text, phone text, whatsapp text, alt_phone text)
-language sql stable security definer set search_path = public as $$
-  select c.contact_name, c.phone, c.whatsapp, c.alt_phone
-  from public.property_contacts c join public.properties p on p.id = c.property_id
-  where c.property_id = p_id and p.status = 'published'
-$$;
+language plpgsql volatile security definer set search_path = public as $$
+declare uid uuid := auth.uid();
+begin
+  if uid is null then
+    raise exception 'Please log in to see contact details.' using errcode = '28000';
+  end if;
+  if not exists (select 1 from public.properties where id = p_id and status = 'published') then
+    return;
+  end if;
+  if not exists (select 1 from public.contact_access where user_id = uid and property_id = p_id
+                  and viewed_at > now() - interval '24 hours')
+     and (select count(distinct property_id) from public.contact_access
+           where user_id = uid and viewed_at > now() - interval '24 hours') >= 100 then
+    raise exception 'Daily contact limit reached. Please try again tomorrow.' using errcode = '54000';
+  end if;
+  insert into public.contact_access(user_id, property_id) values (uid, p_id);
+  return query
+    select c.contact_name, c.phone, c.whatsapp, c.alt_phone
+    from public.property_contacts c where c.property_id = p_id;
+end $$;
 
 create or replace function public.get_listing_meta(p_id uuid)
 returns table (email_verified boolean, member_since timestamptz)
@@ -623,15 +676,44 @@ begin
 end $$;
 
 -- ---------- permissions ----------
-revoke all on function public.save_property(uuid, jsonb), public.set_property_status(uuid, text),
-  public.set_property_rent(uuid, integer, integer), public.delete_property(uuid),
-  public.admin_list_users(text, integer) from public, anon;
+-- PostgreSQL grants EXECUTE on new functions to everybody by default, and Supabase grants table access to the
+-- anon/authenticated roles by default. We close both and then open ONLY what the website needs.
+-- (Row Level Security below still applies on top of these grants.)
+alter default privileges in schema public revoke execute on functions from public, anon, authenticated;
+alter default privileges in schema public revoke all on tables from anon, authenticated;
+
+do $$ declare f record; begin
+  for f in
+    select p.oid::regprocedure as sig from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.prokind = 'f'
+      and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')
+  loop
+    execute format('revoke all on function %s from public, anon, authenticated', f.sig);
+  end loop;
+end $$;
+
+-- logged-in users only (these all re-check auth.uid() / ownership / admin inside the function)
 grant execute on function public.save_property(uuid, jsonb), public.set_property_status(uuid, text),
   public.set_property_rent(uuid, integer, integer), public.delete_property(uuid),
-  public.admin_list_users(text, integer) to authenticated;
+  public.admin_list_users(text, integer), public.get_public_contact(uuid) to authenticated;
+-- public (no contact data in any of these)
 grant execute on function public.search_properties(jsonb, text, integer, integer),
-  public.get_public_contact(uuid), public.get_listing_meta(uuid), public.is_admin() to anon, authenticated;
-grant select on public.location_stats to anon, authenticated;
+  public.get_listing_meta(uuid) to anon, authenticated;
+-- needed so Row Level Security policies can be evaluated for every role
+grant execute on function public.is_admin(), public.is_owner(uuid) to anon, authenticated;
+
+revoke all on all tables in schema public from anon, authenticated;
+grant select on public.states, public.locations, public.amenities, public.properties, public.property_rules,
+  public.property_utilities, public.property_amenities, public.property_nearby, public.property_images,
+  public.location_stats to anon, authenticated;
+grant select on public.profiles, public.property_owners, public.property_contacts, public.property_private,
+  public.admins, public.app_settings to authenticated;           -- rows still limited by RLS policies
+grant update (full_name, phone, account_type) on public.profiles to authenticated;
+grant insert, delete on public.property_images to authenticated;
+grant update (category, alt_text, is_primary, sort_order) on public.property_images to authenticated;
+grant insert on public.reports to anon, authenticated;
+grant select on public.reports to authenticated;
+grant update (status) on public.reports to authenticated;
 
 -- ---------- Row Level Security ----------
 do $$ declare pol record; begin
@@ -656,12 +738,13 @@ alter table public.property_images enable row level security;
 alter table public.property_contacts enable row level security;
 alter table public.property_private enable row level security;
 alter table public.reports enable row level security;
+alter table public.contact_access enable row level security;  -- no policies: not readable through the API
 
 create policy kg_states_read on public.states for select using (true);
 create policy kg_locations_read on public.locations for select using (true);
 create policy kg_amenities_read on public.amenities for select using (true);
 
-create policy kg_profiles_read on public.profiles for select using (id = auth.uid() or public.is_admin());
+create policy kg_profiles_read on public.profiles for select to authenticated using (id = auth.uid() or public.is_admin());
 create policy kg_profiles_update on public.profiles for update to authenticated
   using (id = auth.uid()) with check (id = auth.uid());
 create policy kg_admins_self on public.admins for select to authenticated using (user_id = auth.uid());
@@ -693,7 +776,8 @@ create policy kg_private_read on public.property_private for select to authentic
 
 -- images: owners manage rows for their own properties
 create policy kg_images_insert on public.property_images for insert to authenticated
-  with check (public.is_owner(property_id) and (storage.foldername(path))[1] = auth.uid()::text);
+  with check (public.is_owner(property_id) and (storage.foldername(path))[1] = auth.uid()::text
+              and (thumb_path is null or (storage.foldername(thumb_path))[1] = auth.uid()::text));
 create policy kg_images_update on public.property_images for update to authenticated
   using (public.is_owner(property_id)) with check (public.is_owner(property_id));
 create policy kg_images_delete on public.property_images for delete to authenticated

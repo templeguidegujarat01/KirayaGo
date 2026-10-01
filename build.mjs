@@ -12,7 +12,7 @@ const url = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
 const key = process.env.SUPABASE_ANON_KEY || '';
 const site = (process.env.SITE_URL || process.env.CF_PAGES_URL || '').replace(/\/+$/, '');
 
-if (/service_role/i.test(key) || (key.split('.')[1] && /service_role/.test(Buffer.from(key.split('.')[1], 'base64').toString()))) {
+if (/^sb_secret_/.test(key) || /service_role/i.test(key) || (key.split('.')[1] && /service_role/.test(Buffer.from(key.split('.')[1], 'base64').toString()))) {
   console.error('ERROR: That looks like a service_role key. Use the anon/public key only.'); process.exit(1);
 }
 if (!url || !key) console.warn('WARNING: SUPABASE_URL / SUPABASE_ANON_KEY not set — the site will show a "setup needed" notice.');
@@ -27,34 +27,50 @@ export const SUPABASE_ANON_KEY = ${JSON.stringify(key)};
 export const SITE_URL = ${JSON.stringify(site)};
 `);
 // local dev for Cloudflare Pages Functions
-writeFileSync('.dev.vars', `SUPABASE_URL=${url}\nSUPABASE_ANON_KEY=${key}\nSITE_URL=${site}\n`);
+if (!process.env.CF_PAGES && !process.env.CI) writeFileSync('.dev.vars', `SUPABASE_URL=${url}\nSUPABASE_ANON_KEY=${key}\nSITE_URL=${site}\n`);
+
+// Security headers: the Content-Security-Policy is tied to your own Supabase address.
+let supaOrigin = 'https://*.supabase.co';
+try { if (url) supaOrigin = new URL(url).origin; } catch { console.error('ERROR: SUPABASE_URL is not a valid URL.'); process.exit(1); }
+const wss = supaOrigin.startsWith('https://') ? supaOrigin.replace('https://', 'wss://') : '';
+writeFileSync('dist/_headers', readFileSync('dist/_headers', 'utf8').replaceAll('__SUPABASE_ORIGIN__', supaOrigin).replaceAll('__SUPABASE_WSS__', wss));
 
 // robots.txt + sitemap.xml (sitemap uses live data at build time; re-deploy to refresh)
-const base = site || 'https://YOUR-SITE.example';
-writeFileSync('dist/robots.txt',
-`User-agent: *
-Allow: /
-Disallow: /dashboard.html
-Disallow: /list.html
-Disallow: /admin.html
-Disallow: /login.html
-Disallow: /reset.html
-Sitemap: ${base}/sitemap.xml
-`);
-const urls = [`${base}/`, `${base}/rent/`];
-if (url && key) {
-  const H = { apikey: key, Authorization: `Bearer ${key}` };
-  try {
-    const stats = await (await fetch(`${url}/rest/v1/location_stats?select=state_slug,city_slug,locality_slug&limit=1000`, { headers: H })).json();
-    const seen = new Set();
-    for (const s of Array.isArray(stats) ? stats : []) {
-      for (const p of [`${s.state_slug}/${s.city_slug}`, `${s.state_slug}/${s.city_slug}/${s.locality_slug}`, s.state_slug])
-        if (!seen.has(p)) { seen.add(p); urls.push(`${base}/rent/${p}/`); }
-    }
-    const props = await (await fetch(`${url}/rest/v1/properties?select=id,updated_at&status=eq.published&order=updated_at.desc&limit=5000`, { headers: H })).json();
-    for (const p of Array.isArray(props) ? props : []) urls.push(`${base}/property/${p.id}`);
-  } catch (e) { console.warn('Sitemap: could not read live data (', e.message, ') — static URLs only.'); }
+// Without a real site address we do NOT invent one: no sitemap is written and robots.txt has no Sitemap line.
+const robots = ['User-agent: *', 'Allow: /', 'Disallow: /dashboard.html', 'Disallow: /list.html', 'Disallow: /admin.html', 'Disallow: /login.html', 'Disallow: /reset.html'];
+if (!site) console.warn('WARNING: SITE_URL is not set — no sitemap.xml will be generated and canonical URLs fall back to the current address. Set SITE_URL in Cloudflare.');
+let sitemapCount = 0;
+if (site) {
+  const base = site;
+  const urls = [{ loc: `${base}/` }, { loc: `${base}/rent/` }];
+  if (url && key) {
+    const H = { apikey: key, Authorization: `Bearer ${key}` };
+    // Supabase returns at most 1000 rows per request, so read page by page.
+    const all = async (path) => {
+      const out = [];
+      for (let from = 0; from < 50000; from += 1000) {
+        const r = await fetch(`${url}/rest/v1/${path}`, { headers: { ...H, Range: `${from}-${from + 999}`, 'Range-Unit': 'items' } });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const rows = await r.json();
+        out.push(...rows);
+        if (rows.length < 1000) break;
+      }
+      return out;
+    };
+    try {
+      const seen = new Set();
+      for (const s of await all('location_stats?select=state_slug,city_slug,locality_slug&order=state_slug,city_slug,locality_slug')) {
+        for (const p of [s.state_slug, `${s.state_slug}/${s.city_slug}`, `${s.state_slug}/${s.city_slug}/${s.locality_slug}`])
+          if (!seen.has(p)) { seen.add(p); urls.push({ loc: `${base}/rent/${p}/` }); }
+      }
+      for (const p of await all('properties?select=id,updated_at&status=eq.published&order=updated_at.desc,id'))
+        urls.push({ loc: `${base}/property/${p.id}`, lastmod: p.updated_at?.slice(0, 10) });
+    } catch (e) { console.warn('WARNING: Sitemap could not read live data (', e.message, ') — only static URLs were written.'); }
+  }
+  writeFileSync('dist/sitemap.xml',
+`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}</url>`).join('\n')}\n</urlset>\n`);
+  robots.push(`Sitemap: ${base}/sitemap.xml`);
+  sitemapCount = urls.length;
 }
-writeFileSync('dist/sitemap.xml',
-`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `<url><loc>${u}</loc></url>`).join('\n')}\n</urlset>\n`);
-console.log(`Built dist/ (${urls.length} sitemap URLs). Supabase configured: ${!!(url && key)}`);
+writeFileSync('dist/robots.txt', robots.join('\n') + '\n');
+console.log(`Built dist/ (${sitemapCount} sitemap URLs). Supabase configured: ${!!(url && key)}. Site URL: ${site || '(not set)'}`);

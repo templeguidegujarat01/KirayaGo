@@ -43,9 +43,10 @@ async function act(id, a, btn) {
       if (!confirm(t('dash.confirm_delete'))) return;
       const { data: imgs } = await sb.from('property_images').select('path,thumb_path').eq('property_id', id);
       const paths = (imgs || []).flatMap((i) => [i.path, i.thumb_path]).filter(Boolean);
-      if (paths.length) await sb.storage.from('property-images').remove(paths);
       const { error } = await sb.rpc('delete_property', { p_id: id });
       if (error) throw error;
+      // files are removed only after the database delete succeeded (best effort)
+      if (paths.length) await sb.storage.from('property-images').remove(paths).catch(() => {});
       toast(t('dash.deleted'));
     } else if (a === 'rent') {
       const dlg = $('#rent-dlg'); $('#rd-rent').value = btn.dataset.rent; $('#rd-dep').value = btn.dataset.dep;

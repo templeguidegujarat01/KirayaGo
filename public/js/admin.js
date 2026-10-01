@@ -55,9 +55,10 @@ async function listingAction(id, act) {
       if (!confirm(t('admin.confirm_delete'))) return;
       const { data: imgs } = await sb.from('property_images').select('path,thumb_path').eq('property_id', id);
       const paths = (imgs || []).flatMap((i) => [i.path, i.thumb_path]).filter(Boolean);
-      if (paths.length) await sb.storage.from('property-images').remove(paths);
       const { error } = await sb.rpc('delete_property', { p_id: id });
       if (error) throw error;
+      // files are removed only after the database delete succeeded (best effort)
+      if (paths.length) await sb.storage.from('property-images').remove(paths).catch(() => {});
     } else {
       const { error } = await sb.rpc('set_property_status', { p_id: id, p_status: act });
       if (error) throw error;

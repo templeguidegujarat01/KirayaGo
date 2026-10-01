@@ -2,7 +2,7 @@ import { boot, $, t, errMsg } from './ui.js';
 import { sb, siteUrl, getUser } from './supabase.js';
 
 const msg = (text, kind = 'err') => { $('#msg').innerHTML = text ? `<div class="notice ${kind}">${text}</div>` : ''; };
-const next = () => { const n = new URLSearchParams(location.search).get('next'); return n && n.startsWith('/') && !n.startsWith('//') ? n : '/dashboard.html'; };
+const next = () => { const n = new URLSearchParams(location.search).get('next'); return n && /^\/(?![\/\\])/.test(n) && !/[\\\u0000-\u001f]/.test(n) ? n : '/dashboard.html'; };
 const validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const nice = (e) => {
   const m = e.message || '';

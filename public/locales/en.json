@@ -29,7 +29,7 @@
  "home.how2_t": "Tenants search",
  "home.how2_d": "Filter by state, city, area, budget and the things that matter to you. No account needed.",
  "home.how3_t": "Talk directly",
- "home.how3_d": "Call or WhatsApp the person who listed it. You already know the basics, so the conversation is short.",
+ "home.how3_d": "Log in (free) to see the phone and WhatsApp number of the person who listed it. You already know the basics, so the conversation is short.",
  "home.why_title": "Why detailed rental information matters",
  "home.why1_t": "How much will I actually pay?",
  "home.why1_d": "Rent, deposit, maintenance and other charges are shown separately — never buried in a description.",
@@ -278,7 +278,7 @@
  "step.review": "Review & publish",
  "stepi.location": "Where is the property? The exact address stays private.",
  "stepi.utilities": "Tenants care a lot about this. Be specific.",
- "stepi.contact": "Shown only when a visitor taps Show contact.",
+ "stepi.contact": "Shown only to logged-in users who tap Show contact. Never shown publicly.",
  "f.state": "State",
  "f.city": "City",
  "f.locality": "Area / locality",
@@ -531,5 +531,9 @@
  "admin.phone": "Phone",
  "admin.done": "Done.",
  "admin.load_more": "Load more",
- "admin.reported_on": "Reported"
+ "admin.reported_on": "Reported",
+ "contact.login_required": "Please log in or create a free account to see the phone and WhatsApp number. This helps protect owners from spam and scraping.",
+ "contact.login_btn": "Log in to see contact",
+ "contact.signup_btn": "Create free account",
+ "contact.limit": "You have viewed many contact details today. Please try again tomorrow."
 }

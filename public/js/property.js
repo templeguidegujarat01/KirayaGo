@@ -1,5 +1,5 @@
 import { boot, $, $$, esc, t, tOpt, inr, fmtDate, toast, errMsg, setMeta, badge, postedByLabel, tenantsText, availText, imgUrl } from './ui.js';
-import { sb, siteUrl, one } from './supabase.js';
+import { sb, siteUrl, one, getUser } from './supabase.js';
 import { OPTS, NEARBY_KINDS, AMENITY_GROUPS } from './constants.js';
 
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -152,13 +152,23 @@ function render(p, meta) {
     $$('.thumbs button').forEach((b) => b.addEventListener('click', () => go(+b.dataset.n)));
   }
 
-  // contact — fetched only on click, never placed in page source or metadata
+  // contact — only for logged-in users (enforced in the database: anon cannot call get_public_contact).
+  // Fetched on click, never placed in page source, search results or metadata.
+  const loginPrompt = () => {
+    const nextUrl = encodeURIComponent(`${location.pathname}#contact`);
+    $('#contact-out').innerHTML = `<div class="notice"><p>${t('contact.login_required')}</p>
+      <p><a class="btn full" href="/login.html?next=${nextUrl}">${t('contact.login_btn')}</a></p>
+      <p><a class="btn full ghost" href="/login.html?next=${nextUrl}#signup">${t('contact.signup_btn')}</a></p></div>`;
+  };
   const showContact = async () => {
     const out = $('#contact-out');
+    if (!(await getUser())) { loginPrompt(); return; }
     out.innerHTML = `<p class="muted">…</p>`;
     const { data, error } = await sb.rpc('get_public_contact', { p_id: p.id });
+    if (error && (error.code === '28000' || error.code === '42501' || /jwt|not authenticated/i.test(error.message || ''))) { loginPrompt(); return; }
+    if (error && error.code === '54000') { out.innerHTML = `<p class="notice err">${t('contact.limit')}</p>`; return; }
     const c = data?.[0];
-    if (error || !c) { out.innerHTML = `<p class="notice err">${t('contact.unavailable')}</p>`; return; }
+    if (error || !c || !c.phone) { out.innerHTML = `<p class="notice err">${t('contact.unavailable')}</p>`; return; }
     const url = `${siteUrl()}/property/${p.id}`;
     const msg = encodeURIComponent(t('contact.wa_msg', { title: p.title, url }));
     out.innerHTML = `${c.contact_name ? `<p><b>${esc(c.contact_name)}</b></p>` : ''}
@@ -169,6 +179,7 @@ function render(p, meta) {
     out.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   };
   $('#show-contact').addEventListener('click', showContact);
+  if (location.hash === '#contact') getUser().then((u) => { if (u) showContact(); }); // returning from login
   $('#show-contact-2').addEventListener('click', () => { $('#show-contact').click(); $('#show-contact').scrollIntoView({ block: 'center', behavior: 'smooth' }); });
 
   // report

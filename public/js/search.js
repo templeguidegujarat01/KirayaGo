@@ -96,6 +96,7 @@ async function run(f) {
   const { data, error } = await sb.rpc('search_properties', { p_filters: toRpc(f), p_sort: f.sort, p_limit: PAGE, p_offset: (f.page - 1) * PAGE });
   cards.removeAttribute('aria-busy');
   if (error) { cards.innerHTML = ''; empty.hidden = false; empty.innerHTML = `<div class="notice err">${esc(error.message)}</div>`; return; }
+  if (!data.length && f.page > 1) return run({ ...f, page: 1 }); // page number beyond the last page
   const total = data[0]?.total_count ?? 0;
   const ln = locName(f);
   const place = [ln.area, ln.city, ln.state].filter(Boolean).join(', ');
